@@ -176,14 +176,48 @@ quali schermate, cosa viene valutato. Il codice lo scrivi tu da zero con
 
 Non valutiamo: la grafica "bella", l'uso di librerie particolari, le performance.
 
+## Domande
+
+Rispondi in `SOLUZIONE.md`, poche righe a domanda: non cerchiamo la definizione da manuale,
+vogliamo capire come ragioni. Se a una non sai rispondere scrivilo, vale più di una risposta
+inventata.
+
+**Sul codice che hai scritto**
+
+1. Che strada hai scelto per `generate_board()` — scarta-e-riprova oppure mosse casuali a
+   partire dalla configurazione vinta? Perché quella e non l'altra?
+2. Perché metà delle disposizioni possibili della board non è risolvibile? Spiegalo come lo
+   spiegheresti a un collega, senza formule.
+3. Come hai trovato il bug del TODO(1)? Il test ti ha detto *che* qualcosa non andava:
+   raccontaci i passaggi da lì alla riga sbagliata.
+4. `apply_move()` restituisce una nuova board invece di modificare quella ricevuta.
+   Che differenza fa? C'è un test che se ne accorge: quale?
+
+**Sulle scelte di progetto**
+
+5. La classifica ordina per mosse e poi per tempo. Se dovessi invece premiare "chi ha
+   giocato meglio", che criterio useresti e cosa cambieresti nel codice?
+6. Oggi le partite stanno in un dizionario in memoria. Cosa si rompe se il backend gira su
+   due processi dietro un load balancer? E qual è il cambiamento più piccolo che lo sistema?
+7. Il frontend non calcola le mosse valide: le chiede al backend a ogni click. Quali sono i
+   vantaggi e qual è il prezzo che si paga? In che caso sceglieresti il contrario?
+8. Un giocatore potrebbe barare con questa API? Come, e cosa aggiungeresti per impedirglielo?
+
+**Per chiudere**
+
+9. Cosa hai lasciato indietro e cosa faresti con altre due ore?
+10. C'è qualcosa nella traccia che ti è sembrato sbagliato o poco chiaro? Dillo pure: fa parte
+    della prova.
+
+---
+
 ## Consegna
 
 1. Fai un fork / una copia della repo con la tua soluzione (mantieni la history dei commit,
    ci interessa più il percorso del singolo commit finale).
 2. Aggiungi un file `SOLUZIONE.md` con:
-   - come far partire tutto, se hai cambiato qualcosa nei comandi;
-   - che strada hai scelto per `generate_board()` e perché;
-   - cosa hai lasciato indietro e cosa faresti con altre due ore.
+   - come far partire tutto, se hai cambiato qualcosa nei comandi rispetto a questo README;
+   - le risposte alle dieci domande qui sopra.
 3. Mandaci il link.
 
 Se qualcosa nella traccia non è chiaro, scrivici: saper fare la domanda giusta conta,
