@@ -1,5 +1,12 @@
 # Prova pratica — Gioco del 15 con classifica
 
+> Ciao, e scusa per l'attesa nel mandarti la prova: la piattaforma è uscita da pochi
+> giorni e in questo periodo stiamo rincorrendo parecchie cose insieme.
+>
+> Se qualcosa non ti è chiaro — la traccia, il setup, una scelta tecnica, anche solo un
+> dubbio stupido — **scrivimi pure in qualsiasi momento**, per qualunque domanda. Chiedere
+> non toglie niente alla valutazione, anzi: preferiamo una domanda a mezz'ora persa.
+
 Piccola applicazione full-stack: un backend Python che genera partite del **gioco del 15**
 (griglia 4x4, 15 tessere + una casella vuota), tiene traccia delle mosse e pubblica una
 classifica; un frontend Next.js che permette di giocarci.
