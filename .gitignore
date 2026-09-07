@@ -1,0 +1,13 @@
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# node / next
+node_modules/
+.next/
+out/
+.env*.local
+.DS_Store
