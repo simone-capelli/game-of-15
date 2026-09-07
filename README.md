@@ -6,6 +6,9 @@
 > Se qualcosa non ti è chiaro — la traccia, il setup, una scelta tecnica, anche solo un
 > dubbio stupido — **scrivimi pure in qualsiasi momento**, per qualunque domanda. Chiedere
 > non toglie niente alla valutazione, anzi: preferiamo una domanda a mezz'ora persa.
+>
+> **Hai tempo fino a lunedì prossimo, 14 settembre**, per consegnare. E usa pure qualsiasi
+> agente di codice o strumento AI ti trovi bene: vedi le due righe qui sotto.
 
 Piccola applicazione full-stack: un backend Python che genera partite del **gioco del 15**
 (griglia 4x4, 15 tessere + una casella vuota), tiene traccia delle mosse e pubblica una
@@ -88,6 +91,10 @@ gli altri sei non sono a posto.
 - I test già verdi devono restare verdi.
 - Puoi aggiungere test tuoi, sono benvenuti.
 - Librerie extra: solo se servono davvero, e scrivi perché.
+- **Puoi usare qualsiasi agente di codice o assistente AI** (Claude Code, Cursor, Copilot,
+  ChatGPT, quello che preferisci): non è considerato barare, è come si lavora oggi. L'unica
+  cosa che ti chiediamo è di saper spiegare quello che consegni — le domande più sotto
+  servono anche a quello.
 
 ---
 
@@ -219,6 +226,8 @@ inventata.
 ---
 
 ## Consegna
+
+**Scadenza: lunedì 14 settembre.** Se ti serve più tempo scrivimi prima, si trova.
 
 1. Fai un fork / una copia della repo con la tua soluzione (mantieni la history dei commit,
    ci interessa più il percorso del singolo commit finale).
