@@ -52,19 +52,21 @@ def to_grid(board: Sequence[int]) -> list[list[int]]:
     return [list(board[r * SIZE:(r + 1) * SIZE]) for r in range(SIZE)]
 
 
-# --------------------------------------------------------------------------
-# TODO (1) - c'e' un bug qui dentro
-# --------------------------------------------------------------------------
-
 def neighbors(index: int) -> Iterator[int]:
     """Indici adiacenti (sopra, sotto, sinistra, destra) a `index`.
 
-    TODO(1): questa implementazione considera adiacenti anche due caselle
-    che stanno su righe diverse (es. l'indice 3, fine della prima riga,
-    e l'indice 4, inizio della seconda). Il test
-    `test_apply_move_rifiuta_il_salto_di_riga` fallisce per questo motivo.
+    La board e' una lista piatta: un passo verticale (+-SIZE) resta nella
+    stessa colonna e puo' solo uscire dalla lista, quindi basta il controllo
+    sui limiti. Un passo orizzontale (+-1) invece, dal bordo di una riga,
+    "scavalca" nella riga accanto restando dentro la lista: va escluso
+    esplicitamente.
     """
+    column = index % SIZE
     for delta in (-SIZE, -1, 1, SIZE):
+        if delta == -1 and column == 0:
+            continue  # bordo sinistro: a sinistra non c'e' niente
+        if delta == 1 and column == SIZE - 1:
+            continue  # bordo destro: a destra non c'e' niente
         candidate = index + delta
         if 0 <= candidate < CELLS:
             yield candidate
