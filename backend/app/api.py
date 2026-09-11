@@ -72,25 +72,20 @@ def make_move(game_id: str, payload: MoveRequest) -> Game:
 
 @router.get("/leaderboard", response_model=list[LeaderboardEntry])
 def leaderboard(limit: int = Query(default=10, ge=1, le=100)) -> list[LeaderboardEntry]:
-    """Classifica delle partite completate.
-
-    TODO(6): questa versione e' sbagliata in tre punti:
-      - include anche le partite non ancora finite;
-      - ordina solo per numero di mosse, mentre a parita' di mosse deve
-        vincere chi ci ha messo meno tempo (duration_ms piu' basso);
-      - ignora il parametro `limit`.
-    """
-    games = sorted(store.all_games(), key=lambda g: g.moves)
+    """Classifica delle partite completate: meno mosse prima, a parita' di
+    mosse la durata piu' breve."""
+    finished = [g for g in store.all_games() if g.solved]
+    ranking = sorted(finished, key=lambda g: (g.moves, g.duration_ms))[:limit]
     return [
         LeaderboardEntry(
             rank=i + 1,
             player=g.player,
             game_id=g.id,
             moves=g.moves,
-            duration_ms=g.duration_ms or 0,
-            finished_at=g.finished_at or g.created_at,
+            duration_ms=g.duration_ms,
+            finished_at=g.finished_at,
         )
-        for i, g in enumerate(games)
+        for i, g in enumerate(ranking)
     ]
 
 
