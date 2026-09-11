@@ -97,28 +97,37 @@ def apply_move(board: Sequence[int], tile: int) -> Board:
     return new_board
 
 
-# --------------------------------------------------------------------------
-# TODO (2) - da implementare
-# --------------------------------------------------------------------------
+def _inversions(board: Sequence[int]) -> int:
+    """Coppie di tessere (vuoto escluso) in cui quella che viene prima
+    nell'ordine di lettura e' piu' grande di quella che viene dopo."""
+    tiles = [t for t in board if t != 0]
+    return sum(
+        1
+        for i in range(len(tiles))
+        for j in range(i + 1, len(tiles))
+        if tiles[i] > tiles[j]
+    )
+
+
+def _blank_row_from_bottom(board: Sequence[int]) -> int:
+    """Riga della casella vuota contando dal basso, da 1 (ultima) a SIZE (prima)."""
+    return SIZE - blank_index(board) // SIZE
+
 
 def is_solvable(board: Sequence[int]) -> bool:
     """True se la board puo' essere portata alla configurazione GOAL.
 
-    TODO(2): implementare. Meta' delle 16! disposizioni possibili NON e'
-    risolvibile, quindi serve un controllo prima di consegnare una partita
-    a un giocatore.
+    La parita' di `inversioni + riga del vuoto dal basso` non cambia mai con
+    una mossa legale: una mossa orizzontale non tocca nessuno dei due numeri,
+    una verticale fa scavalcare alla tessera SIZE-1 = 3 tessere (variazione
+    dispari delle inversioni) e sposta il vuoto di una riga (altra variazione
+    dispari), e le due si compensano. GOAL ha somma 0 + 1 = 1, dispari:
+    quindi solo le board a somma dispari possono raggiungerlo.
 
-    Suggerimento (griglia di lato pari, come la nostra 4x4):
-      - conta le "inversioni": le coppie di tessere (i < j, vuoto escluso)
-        in cui il valore che viene prima e' piu' grande di quello che viene dopo;
-      - guarda la riga in cui si trova la casella vuota, contando le righe
-        dal basso partendo da 1;
-      - la board e' risolvibile quando la somma dei due numeri e' dispari.
-
-    Verifica veloce: la board GOAL ha 0 inversioni, il vuoto e' nella riga 1
-    dal basso -> 0 + 1 = 1, dispari -> risolvibile.
+    Vale per griglie di lato pari: su un 3x3 la tessera scavalcherebbe 2
+    tessere e basterebbero le inversioni da sole.
     """
-    raise NotImplementedError("TODO(2): implementare is_solvable")
+    return (_inversions(board) + _blank_row_from_bottom(board)) % 2 == 1
 
 
 # --------------------------------------------------------------------------

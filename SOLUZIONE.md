@@ -29,7 +29,26 @@ _(da scrivere)_
 
 **2. Perché metà delle disposizioni non è risolvibile?**
 
-_(da scrivere)_
+All'inizio ho usato il suggerimento della docstring come una regola presa per buona, senza
+capirla. Per capirla ho preso una board sulla whiteboard, ho contato le inversioni (8) e la
+riga del vuoto dal basso (1), poi ho fatto una mossa legale — il 14 che scende nel vuoto — e
+ho ricontato: 7 e 2. La somma era 9 in tutti e due i casi.
+
+Guardando *perché*: nella lettura per righe il 14 ha scavalcato tre tessere (12, 15, 11) e
+per ognuna la coppia si è girata, quindi le inversioni cambiano sempre di un numero dispari
+in una mossa verticale; nello stesso momento il vuoto cambia riga di uno. Due variazioni
+dispari si compensano e la parità della somma resta quella. In una mossa orizzontale non
+cambia niente: la tessera si scambia solo con il vuoto, che non conta.
+
+Quindi quella parità è come una moneta che le mosse legali non girano mai. La board risolta
+ha la moneta su "dispari", e una board con la moneta su "pari" non può arrivarci con nessuna
+sequenza di mosse. Scambiare a mano due tessere adiacenti — cosa che il gioco non permette —
+gira la moneta: ogni disposizione ha una gemella con la parità opposta, per questo le
+disposizioni si dividono esattamente a metà.
+
+Il "tre tessere scavalcate" vale perché la griglia ha lato pari (4 − 1 = 3). Su un 3x3
+sarebbero due, la variazione sarebbe pari, e basterebbero le inversioni da sole: la regola
+della docstring non è universale.
 
 **3. Come ho trovato il bug del TODO(1)**
 
