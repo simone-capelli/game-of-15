@@ -15,7 +15,37 @@ uvicorn app.main:app --reload --port 8000
 pytest -v
 ```
 
-Il frontend è invariato rispetto a `frontend/README.md`.
+Frontend (Next.js 16, App Router, TypeScript, CSS plain), in un secondo terminale:
+
+```powershell
+cd frontend
+npm install
+# crea .env.local con: NEXT_PUBLIC_API_URL=http://localhost:8000
+npm run dev          # http://localhost:3000
+```
+
+Se `.env.local` manca, `lib/api.ts` usa comunque `http://localhost:8000`.
+
+Il frontend ha un tema arcade (font pixel, neon, Pac-Man che passeggia in fondo). Due scelte
+che vanno oltre la spec e che segnalo:
+
+- il nome del giocatore si inserisce come **tre iniziali** stile high score (frecce ▲/▼ o
+  tastiera), quindi è sempre di 3 lettere: rientra nell'1–32 richiesto dal backend, e in
+  classifica il nome è mostrato come iniziali maiuscole (il nome intero è nel `title`);
+- le **frecce da tastiera** muovono la tessera adiacente al vuoto nella direzione premuta:
+  il frontend mappa solo "freccia → tessera" e invia la mossa se è tra i `movable` del
+  server; la legalità resta decisa dal backend.
+
+Le animazioni decorative rispettano `prefers-reduced-motion`.
+
+### Oltre la traccia: la pausa
+
+Ho aggiunto un bottone "Pausa" nella schermata di gioco. Siccome il tempo lo calcola il
+server, una pausa solo a schermo avrebbe mostrato un tempo diverso da quello in classifica.
+Quindi la pausa è lato backend: `POST /api/games/{id}/pause` e `/resume`, due campi in più
+su `Game` (`paused_ms`, `paused_at`) — aggiunti, non modificati — e `duration_ms` che sconta
+le pause. In pausa le mosse rispondono 409 e `movable` è vuoto. Test in
+`tests/test_pause.py`. È un'estensione: si può rimuovere con un revert del suo commit.
 
 ---
 
@@ -94,32 +124,104 @@ non si accorge del bug non serve.
 
 **4. `apply_move()` restituisce una nuova board: che differenza fa?**
 
-_(da scrivere)_
+Chi la chiama tiene la sua board intatta finché non decide di sostituirla. In `make_move`
+questo vuol dire che se la mossa è illegale e `apply_move` solleva `InvalidMove`, la board
+salvata non è stata toccata: il 400 non lascia tracce. Se modificasse sul posto, il rifiuto
+potrebbe arrivare con la board già cambiata a metà.
+
+Me ne sono accorto anche in `random_walk`: la lista `visited` contiene cento board diverse
+solo perché ogni chiamata ne crea una nuova. Con la modifica sul posto sarebbero cento
+riferimenti alla stessa lista, tutti uguali all'ultima.
+
+Il test che se ne accorge è `test_apply_move_scambia_tessera_e_vuoto`, alla riga
+`assert GOAL[14] == 15, "apply_move non deve modificare la board ricevuta"`: `GOAL` è una
+costante condivisa da tutti i test, e se `apply_move` la modificasse i test successivi
+partirebbero da una board sbagliata.
 
 ### Sulle scelte di progetto
 
 **5. Classifica: premiare "chi ha giocato meglio"**
 
-_(da scrivere)_
+Il numero di mosse da solo premia chi ha ricevuto una board facile. "Giocare bene" è fare
+poche mosse *rispetto al minimo possibile per quella board*: userei il rapporto
+`mosse / mosse_ottime`, dove 1.0 è la partita perfetta.
+
+Nel codice: implementare `puzzle.solve()` (il bonus, A* con distanza di Manhattan), calcolare
+la lunghezza della soluzione ottima in `create_game` e salvarla in un campo nuovo
+`optimal_moves` di `Game`; in `leaderboard` la chiave diventa
+`(moves / optimal_moves, duration_ms)`. È un'aggiunta al contratto di `models.py`, non un
+cambiamento: i campi esistenti restano uguali. Il prezzo è che A* su una board 4x4 può
+essere lento sulle board difficili, e andrebbe misurato prima di farlo a ogni creazione.
 
 **6. Due processi dietro un load balancer**
 
-_(da scrivere)_
+Ogni processo ha il suo dizionario `_games` in RAM. La partita creata sul processo A non
+esiste sul processo B: la mossa successiva, se il bilanciatore la manda a B, prende 404.
+La classifica mostra solo le partite del processo che risponde. Il `threading.Lock` non
+aiuta: protegge i thread dentro un processo, non due processi.
+
+Il cambiamento più piccolo: spostare il dizionario in qualcosa condiviso tra processi (Redis,
+o anche un SQLite su disco) tenendo le stesse quattro funzioni di `store.py`. `api.py` non
+cambierebbe di una riga, perché parla con lo store solo tramite `save`/`get`/`all_games`.
+
+C'è anche un problema che esiste già con un processo solo: `store.get` restituisce l'oggetto
+vivo, e `make_move` lo modifica fuori dal lock. Due mosse sulla stessa partita arrivate
+insieme possono sovrascriversi. Con uno store esterno servirebbe una scrittura atomica
+(o un lock per partita).
 
 **7. Il frontend chiede le mosse valide al backend**
 
-_(da scrivere)_
+Vantaggi: la logica di gioco esiste in un posto solo, quindi non può divergere tra client e
+server; il frontend è semplice (mostra quello che riceve); barare spostando tessere in
+locale è impossibile, perché lo stato vero è quello del server.
+
+Il prezzo: un giro di rete per ogni click. Con latenza alta ogni mossa si sente, e senza
+rete non si gioca. In più il server fa più lavoro.
+
+Sceglierei il contrario se la reattività fosse il requisito principale (mobile, connessione
+scarsa) o servisse il gioco offline: il client muove subito le tessere e il server valida a
+posteriori, rifiutando la partita se la sequenza di mosse non torna. La logica sarebbe
+duplicata, e andrebbe tenuta identica nei due posti.
 
 **8. Si può barare con questa API?**
 
-_(da scrivere)_
+Sì, in almeno due modi. Il primo: `POST /api/games` accetta `seed` dal client, quindi si può
+scegliere una board nota, risolverla offline e rigiocare la soluzione ottima con uno script
+in pochi millisecondi: primo posto con mosse minime e tempo quasi zero. Il secondo: anche
+senza seed, uno script che chiama `/moves` non ha nessun limite di velocità, e il campo
+`player` è un testo libero senza identità.
+
+Cosa aggiungerei: il seed accettato solo in un ambiente di sviluppo, non in produzione; un
+token per partita, restituito alla creazione e richiesto a ogni mossa, così solo chi ha
+creato la partita può muovere; un limite alla frequenza delle mosse per partita (nessun
+umano fa dieci mosse in un secondo). Se si implementa il bonus `hint`, va protetto o
+disattivato in classifica: è un aiuto integrato a barare.
 
 ### Per chiudere
 
 **9. Cosa ho lasciato indietro**
 
-_(da scrivere)_
+_(da rivedere alla fine, dopo il frontend)_
+
+Il bonus `solve()`/`hint` non l'ho fatto. La guardia `while is_solved` in `generate_board`
+non è esercitata da nessun test: con il no-ritorno servono almeno 12 mosse precise per
+tornare su GOAL, e non ho voluto costruire un test artificiale. La race condition tra due
+mosse simultanee sulla stessa partita (Q6) esiste e non l'ho sistemata: è fuori dai TODO e
+con un processo e un giocatore per partita non si manifesta.
+
+Con altre due ore: A* per `hint` (e con quello anche la classifica per efficienza di Q5), un
+lock per partita in `make_move`, e sul frontend le frecce da tastiera.
 
 **10. Qualcosa di sbagliato o poco chiaro nella traccia?**
 
-_(da scrivere)_
+- La docstring del TODO(1) dice già quali indici sono sbagliati (3 e 4): il bug si trova
+  leggendo il commento, e la domanda 3 perde un po' di senso.
+- `_with_movable` scrive `game.movable` sull'oggetto salvato in memoria: una `GET` modifica
+  lo stato. Innocuo, ma un endpoint di lettura non dovrebbe avere effetti collaterali.
+- Il tempo parte da `created_at`, cioè dalla creazione della partita, non dalla prima mossa:
+  chi legge la griglia per trenta secondi prima di muovere viene penalizzato.
+- Il `seed` accettato dal client è comodo per i test ma è la via più facile per barare (Q8):
+  non è chiaro se sia voluto anche in produzione.
+- I test originali usano durate tonde (30 s): un `timedelta.seconds` al posto di
+  `total_seconds()` li passerebbe tutti perdendo i millisecondi. Ho aggiunto un test da 1,5 s.
+- I comandi di avvio sono per bash; su Windows cambia l'attivazione del venv.

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from fastapi import APIRouter, HTTPException, Query
 
 from . import puzzle, store
@@ -12,8 +14,23 @@ router = APIRouter(prefix="/api", tags=["gioco del 15"])
 
 def _with_movable(game: Game) -> Game:
     """Aggiunge alla risposta l'elenco delle tessere cliccabili."""
-    game.movable = [] if game.solved else puzzle.movable_tiles(game.board)
+    playable = not game.solved and game.paused_at is None
+    game.movable = puzzle.movable_tiles(game.board) if playable else []
     return game
+
+
+def _get_open_game(game_id: str) -> Game:
+    """La partita se esiste ed e' ancora in corso: 404 o 409 altrimenti."""
+    game = store.get(game_id)
+    if game is None:
+        raise HTTPException(status_code=404, detail="partita non trovata")
+    if game.solved:
+        raise HTTPException(status_code=409, detail="partita gia' conclusa")
+    return game
+
+
+def _ms_between(start: datetime, end: datetime) -> int:
+    return int((end - start).total_seconds() * 1000)
 
 
 @router.post("/games", response_model=Game, status_code=201)
@@ -48,11 +65,9 @@ def get_game(game_id: str) -> Game:
 @router.post("/games/{game_id}/moves", response_model=Game)
 def make_move(game_id: str, payload: MoveRequest) -> Game:
     """Muove una tessera e aggiorna lo stato della partita."""
-    game = store.get(game_id)
-    if game is None:
-        raise HTTPException(status_code=404, detail="partita non trovata")
-    if game.solved:
-        raise HTTPException(status_code=409, detail="partita gia' conclusa")
+    game = _get_open_game(game_id)
+    if game.paused_at is not None:
+        raise HTTPException(status_code=409, detail="partita in pausa: riprendi prima di muovere")
 
     try:
         game.board = puzzle.apply_move(game.board, payload.tile)
@@ -63,9 +78,29 @@ def make_move(game_id: str, payload: MoveRequest) -> Game:
     if puzzle.is_solved(game.board):
         game.solved = True
         game.finished_at = store.now()
-        elapsed = game.finished_at - game.created_at
-        game.duration_ms = int(elapsed.total_seconds() * 1000)
+        game.duration_ms = _ms_between(game.created_at, game.finished_at) - game.paused_ms
 
+    store.save(game)
+    return _with_movable(game)
+
+
+@router.post("/games/{game_id}/pause", response_model=Game)
+def pause_game(game_id: str) -> Game:
+    """Ferma il tempo. Idempotente: mettere in pausa una partita gia' in pausa non cambia nulla."""
+    game = _get_open_game(game_id)
+    if game.paused_at is None:
+        game.paused_at = store.now()
+    store.save(game)
+    return _with_movable(game)
+
+
+@router.post("/games/{game_id}/resume", response_model=Game)
+def resume_game(game_id: str) -> Game:
+    """Riprende il tempo, scontando la pausa appena finita. Idempotente."""
+    game = _get_open_game(game_id)
+    if game.paused_at is not None:
+        game.paused_ms += _ms_between(game.paused_at, store.now())
+        game.paused_at = None
     store.save(game)
     return _with_movable(game)
 

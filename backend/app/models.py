@@ -28,6 +28,11 @@ class Game(BaseModel):
     finished_at: datetime | None = None
     duration_ms: int | None = None
 
+    # pausa: millisecondi gia' scontati dal tempo e, se in pausa adesso, da quando.
+    # Campi aggiunti (non modificati) rispetto al contratto originale.
+    paused_ms: int = 0
+    paused_at: datetime | None = None
+
     # comodita' per il frontend: quali tessere sono cliccabili adesso
     movable: list[int] = []
 
