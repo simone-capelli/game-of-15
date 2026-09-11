@@ -51,10 +51,8 @@ def make_move(game_id: str, payload: MoveRequest) -> Game:
     game = store.get(game_id)
     if game is None:
         raise HTTPException(status_code=404, detail="partita non trovata")
-
-    # TODO(4): se la partita e' gia' finita (game.solved) la mossa va rifiutata
-    # con HTTP 409 e un messaggio chiaro. Adesso invece si continua a giocare
-    # su una partita conclusa e il contatore delle mosse va avanti.
+    if game.solved:
+        raise HTTPException(status_code=409, detail="partita gia' conclusa")
 
     try:
         game.board = puzzle.apply_move(game.board, payload.tile)
@@ -62,12 +60,11 @@ def make_move(game_id: str, payload: MoveRequest) -> Game:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     game.moves += 1
-
-    # TODO(5): quando la board e' risolta bisogna chiudere la partita:
-    #   - game.solved = True
-    #   - game.finished_at = store.now()
-    #   - game.duration_ms = millisecondi tra created_at e finished_at (int)
-    # Solo le partite chiuse cosi' finiscono in classifica.
+    if puzzle.is_solved(game.board):
+        game.solved = True
+        game.finished_at = store.now()
+        elapsed = game.finished_at - game.created_at
+        game.duration_ms = int(elapsed.total_seconds() * 1000)
 
     store.save(game)
     return _with_movable(game)
