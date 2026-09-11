@@ -130,29 +130,43 @@ def is_solvable(board: Sequence[int]) -> bool:
     return (_inversions(board) + _blank_row_from_bottom(board)) % 2 == 1
 
 
-# --------------------------------------------------------------------------
-# TODO (3) - da correggere
-# --------------------------------------------------------------------------
+# Mosse casuali per mescolare una nuova partita. La soluzione ottima di una
+# board 4x4 non supera mai le 80 mosse: un cammino di 100 passi senza
+# ritorni immediati basta a portare la board lontano da GOAL.
+SHUFFLE_MOVES = 100
+
+
+def random_walk(rng: random.Random, steps: int, start: Sequence[int] = GOAL) -> list[Board]:
+    """Le board attraversate facendo `steps` mosse legali casuali da `start`.
+
+    Ogni mossa viene scelta con `rng` tra le tessere muovibili, escludendo
+    quella appena mossa: rimetterla a posto annullerebbe il passo precedente.
+    Tutta la casualita' passa da `rng`, cosi' a parita' di seed il cammino e'
+    identico.
+    """
+    board = list(start)
+    last_tile: int | None = None
+    visited: list[Board] = []
+    for _ in range(steps):
+        candidates = [t for t in movable_tiles(board) if t != last_tile]
+        last_tile = rng.choice(candidates)
+        board = apply_move(board, last_tile)
+        visited.append(board)
+    return visited
+
 
 def generate_board(seed: int | None = None) -> Board:
     """Genera la board iniziale di una nuova partita.
 
-    TODO(3): cosi' com'e' scritta questa funzione restituisce una board
-    completamente casuale: circa una partita su due e' IMPOSSIBILE da
-    risolvere, e ogni tanto esce gia' risolta.
-
-    Deve invece restituire sempre una board risolvibile e mai gia' risolta.
-    Due strade possibili (scegli tu, motivala nel README di consegna):
-      a) genera a caso e riprova finche' `is_solvable` non dice di si';
-      b) parti da GOAL e applica N mosse casuali valide (una board raggiunta
-         con mosse valide e' risolvibile per costruzione).
-
-    `seed` serve a rendere la generazione riproducibile nei test:
-    con lo stesso seed deve uscire sempre la stessa board.
+    Parte da GOAL e applica SHUFFLE_MOVES mosse legali casuali: una board
+    raggiunta cosi' e' risolvibile per costruzione (basta rifare le mosse al
+    contrario), senza dipendere da `is_solvable`. Con lo stesso `seed` esce
+    sempre la stessa board.
     """
     rng = random.Random(seed)
-    board = list(GOAL)
-    rng.shuffle(board)
+    board = random_walk(rng, SHUFFLE_MOVES)[-1]
+    while is_solved(board):  # il cammino puo' tornare su GOAL: si riparte
+        board = random_walk(rng, SHUFFLE_MOVES, start=board)[-1]
     return board
 
 

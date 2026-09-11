@@ -20,14 +20,7 @@ BOARD_A_MANO = [1, 2, 3, 4,
 
 
 def _random_walk(seed: int, steps: int) -> list[list[int]]:
-    """Le board attraversate facendo `steps` mosse legali casuali da GOAL."""
-    rng = random.Random(seed)
-    board = GOAL
-    visited = []
-    for _ in range(steps):
-        board = puzzle.apply_move(board, rng.choice(puzzle.movable_tiles(board)))
-        visited.append(board)
-    return visited
+    return puzzle.random_walk(random.Random(seed), steps)
 
 
 def _swap_two_adjacent_tiles(board: list[int]) -> list[int]:

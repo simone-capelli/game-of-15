@@ -25,7 +25,24 @@ Il frontend è invariato rispetto a `frontend/README.md`.
 
 **1. `generate_board()`: scarta-e-riprova o mosse casuali da GOAL?**
 
-_(da scrivere)_
+Mosse casuali da GOAL. Il motivo è che la risolvibilità diventa una garanzia strutturale
+invece di un controllo: una board raggiunta con mosse legali si risolve rifacendole al
+contrario, punto. Con scarta-e-riprova invece la correttezza dipende da `is_solvable`: se
+un giorno qualcuno ci mette un bug, il server inizia a servire partite impossibili e
+nessuno se ne accorge.
+
+Non l'ho scelta per il costo di calcolo, che all'inizio mi sembrava l'argomento: `is_solvable`
+fa 105 confronti e scarta-e-riprova in media riprova due volte, quindi la strada (a) farebbe
+persino meno lavoro di cento mosse. È irrilevante in entrambi i casi.
+
+Il prezzo che pago: il cammino può in teoria tornare su GOAL (c'è una guardia che riparte),
+le board non sono distribuite uniformemente tra tutte quelle risolvibili ma "vicine" a GOAL,
+e un cammino ingenuo perde circa un passo su tre rimettendo a posto la tessera appena mossa.
+Per quest'ultimo punto `random_walk` esclude dalle candidate l'ultima tessera mossa.
+
+Il cammino è una funzione a sé (`puzzle.random_walk`) usata sia da `generate_board` sia dai
+test di `is_solvable`: così i test verificano l'invariante esattamente sul meccanismo che
+genera le partite, non su una copia.
 
 **2. Perché metà delle disposizioni non è risolvibile?**
 
