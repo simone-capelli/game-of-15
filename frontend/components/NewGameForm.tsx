@@ -8,7 +8,7 @@ import ErrorMessage from "./ErrorMessage";
 
 export const LAST_PLAYER_KEY = "puzzle15:lastPlayer";
 
-// PLAY A GAME -> iniziali -> START. Il nome (1-32 caratteri per il backend,
+// PLAY A GAME -> nome (3 lettere) -> START. Il nome (1-32 caratteri per il backend,
 // qui sempre 3 lettere) e' obbligatorio: senza non si chiama il server.
 export default function NewGameForm() {
   const router = useRouter();

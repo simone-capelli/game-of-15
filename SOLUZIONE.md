@@ -20,23 +20,33 @@ Frontend (Next.js 16, App Router, TypeScript, CSS plain), in un secondo terminal
 ```powershell
 cd frontend
 npm install
-# crea .env.local con: NEXT_PUBLIC_API_URL=http://localhost:8000
 npm run dev          # http://localhost:3000
 ```
 
-Se `.env.local` manca, `lib/api.ts` usa comunque `http://localhost:8000`.
+`NEXT_PUBLIC_API_URL` in `.env.local` è opzionale: se manca, `lib/api.ts` chiama il backend
+sullo stesso host della pagina, porta 8000. Così l'app si apre anche da un altro dispositivo
+in rete locale (URL "Network" di `npm run dev`), a patto di avviare il backend con
+`--host 0.0.0.0`; il CORS ammette le origini di rete locale.
 
 Il frontend ha un tema arcade (font pixel, neon, Pac-Man che passeggia in fondo). Due scelte
 che vanno oltre la spec e che segnalo:
 
-- il nome del giocatore si inserisce come **tre iniziali** stile high score (frecce ▲/▼ o
-  tastiera), quindi è sempre di 3 lettere: rientra nell'1–32 richiesto dal backend, e in
+- il nome del giocatore è di **tre lettere** stile high score (campo di testo, maiuscole
+  automatiche, solo lettere): rientra nell'1–32 richiesto dal backend, e in
   classifica il nome è mostrato come iniziali maiuscole (il nome intero è nel `title`);
 - le **frecce da tastiera** muovono la tessera adiacente al vuoto nella direzione premuta:
   il frontend mappa solo "freccia → tessera" e invia la mossa se è tra i `movable` del
   server; la legalità resta decisa dal backend.
 
 Le animazioni decorative rispettano `prefers-reduced-motion`.
+
+### Deploy (facoltativo)
+
+Backend su Render (`render.yaml` alla radice: "New > Blueprint"), con la variabile
+`CORS_ORIGINS` impostata al dominio del frontend. Frontend su Vercel con root directory
+`frontend` e `NEXT_PUBLIC_API_URL` = URL del servizio Render. Il backend non può stare su
+Vercel: le funzioni serverless non condividono la memoria tra richieste, e lo store è in
+memoria (vedi domanda 6).
 
 ### Oltre la traccia: la pausa
 
@@ -110,17 +120,15 @@ sulla griglia è l'inizio della seconda riga. Il controllo `0 <= candidate < 16`
 accorge perché 4 è un indice valido: il problema non è uscire dalla lista, è scavalcare il
 bordo della riga restando dentro la lista.
 
-Da lì ho cercato una regola valida per ogni cella, non solo per l'esempio. Prima ho provato
-a calcolare gli estremi della riga (`riga * SIZE` ecc.), poi mi sono accorto che
-`index % SIZE` dà direttamente la colonna ed è più semplice. Il fix: dalla colonna 0 non si
-va a `-1`, dalla colonna 3 non si va a `+1`. I passi verticali non hanno bisogno di niente
-perché restano nella stessa colonna: possono solo uscire dalla lista, e lì il controllo
-esistente basta.
+Da lì ho cercato una regola valida per ogni cella, non solo per l'esempio: `index % SIZE`
+dà la colonna, e dalla colonna 0 non si va a `-1`, dalla colonna 3 non si va a `+1`. I passi
+verticali non hanno bisogno di niente perché restano nella stessa colonna: possono solo
+uscire dalla lista, e lì il controllo esistente basta.
 
 Per provarlo: il test rosso è verde, i tre test verdi che dipendono da `neighbors` lo sono
 rimasti, e ho aggiunto `tests/test_neighbors.py` che controlla tutte e 16 le celle. Ho
-verificato che 6 di quei test diventino rossi se rimetto la versione buggata: un test che
-non si accorge del bug non serve.
+verificato che la maggior parte di quei test diventi rossa se rimetto la versione buggata:
+un test che non si accorge del bug non serve.
 
 **4. `apply_move()` restituisce una nuova board: che differenza fa?**
 

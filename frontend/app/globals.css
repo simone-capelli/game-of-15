@@ -205,51 +205,32 @@ button {
   justify-content: center;
 }
 
-/* --- picker iniziali -------------------------------------------------- */
+/* --- campo iniziali --------------------------------------------------- */
 
-.initials {
-  display: flex;
-  gap: 1rem;
-}
-
-.initials-slot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.initials-slot .letter {
-  width: 3.2rem;
-  height: 3.6rem;
-  display: grid;
-  place-items: center;
+.initials-input {
+  width: 9rem;
+  padding: 0.6rem 0;
+  font-family: inherit;
   font-size: 1.8rem;
+  text-align: center;
+  letter-spacing: 0.4em;
+  text-indent: 0.4em; /* compensa lo spazio dopo l'ultima lettera */
   color: var(--yellow);
-  border: 3px solid var(--blue);
   background: var(--face);
+  border: 3px solid var(--blue);
   box-shadow: 0 0 8px rgba(33, 33, 222, 0.6);
+  caret-color: var(--yellow);
 }
 
-.initials-slot--active .letter {
+.initials-input::placeholder {
+  color: var(--gray);
+  opacity: 0.35;
+}
+
+.initials-input:focus-visible {
+  outline: none;
   border-color: var(--yellow);
   box-shadow: 0 0 12px rgba(255, 255, 0, 0.7);
-}
-
-.arrow {
-  background: none;
-  border: 0;
-  color: var(--cyan);
-  font-size: 0.9rem;
-  cursor: pointer;
-  padding: 0.2rem 0.6rem;
-}
-
-.arrow:hover,
-.arrow:focus-visible {
-  color: var(--yellow);
-  outline: none;
-  text-shadow: 0 0 8px var(--yellow);
 }
 
 /* --- board ------------------------------------------------------------- */

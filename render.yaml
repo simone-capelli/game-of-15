@@ -1,0 +1,17 @@
+# Backend su Render (https://render.com): "New > Blueprint" e punta a questa repo.
+# Le partite restano in memoria: sopravvivono finche' il servizio non si riavvia
+# (deploy o risveglio dal piano gratuito), come previsto dalla traccia.
+services:
+  - type: web
+    name: gioco-del-15-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13"
+      - key: CORS_ORIGINS
+        sync: false # da impostare a mano: il dominio Vercel del frontend
